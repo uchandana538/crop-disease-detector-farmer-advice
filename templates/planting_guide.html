@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}LeafDoc — Seasonal Planting & Crop Advisory Guide{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:10px;">
+        <span style="font-size:38px;">📅</span>
+        <div>
+            <h1>Seasonal Planting & Crop Protection Guide</h1>
+            <p class="subtitle" style="margin-bottom:0;">What crops to sow, disease vulnerabilities to anticipate, and optimal care season-by-season.</p>
+        </div>
+    </div>
+
+    <!-- Summer Guide -->
+    <div class="chart-card" style="margin-top:25px; border-left:5px solid #ff9800;">
+        <h3 style="color:#e65100;">☀️ Summer Season (March – May)</h3>
+        <p style="margin-bottom:10px;"><strong>Optimal Crops:</strong> Okra, Cucumber, Watermelon, Chili Pepper, Maize, Sunflower, Moong Bean</p>
+        <p style="margin-bottom:6px;"><strong>Key Protection & Irrigation Advice:</strong></p>
+        <ul style="margin-left:22px; line-height:1.8; font-size:14px; color:var(--text-color);">
+            <li><strong>Drip / Early Irrigation:</strong> Water during pre-dawn or sunset to prevent rapid thermal evaporation and plant shock.</li>
+            <li><strong>Organic Mulching:</strong> Spread paddy straw or dry crop residue (5-7 cm thick) across root zones to conserve soil moisture.</li>
+            <li><strong>Sunburn & Scorch Guard:</strong> Erect 30-50% shade netting over sensitive nursery saplings during peak afternoon sun.</li>
+            <li><strong>Pest Vectors:</strong> Heat encourages sucking pests like whiteflies and thrips. Spray organic neem formulation preventively.</li>
+        </ul>
+    </div>
+
+    <!-- Monsoon Guide -->
+    <div class="chart-card" style="margin-top:20px; border-left:5px solid #2196f3;">
+        <h3 style="color:#1565c0;">🌧️ Monsoon Season (June – September)</h3>
+        <p style="margin-bottom:10px;"><strong>Optimal Crops:</strong> Paddy (Rice), Soybean, Cotton, Groundnut, Turmeric, Ginger, Sugarcane</p>
+        <p style="margin-bottom:6px;"><strong>Key Protection & Irrigation Advice:</strong></p>
+        <ul style="margin-left:22px; line-height:1.8; font-size:14px; color:var(--text-color);">
+            <li><strong>Field Drainage:</strong> Construct border trenches to evacuate standing water and prevent fungal Phytophthora root rot.</li>
+            <li><strong>High Blight Risk:</strong> Warm moisture accelerates fungal spore germination. Inspect lower foliage weekly.</li>
+            <li><strong>Fungicidal Shield:</strong> Spray protective contact fungicide (Mancozeb 75 WP @ 2.5g/L) prior to prolonged rainfall spells.</li>
+            <li><strong>No Overhead Sprinklers:</strong> Avoid wetting foliage artificially; ambient precipitation provides adequate moisture.</li>
+        </ul>
+    </div>
+
+    <!-- Winter Guide -->
+    <div class="chart-card" style="margin-top:20px; border-left:5px solid #607d8b;">
+        <h3 style="color:#37474f;">❄️ Winter Season (October – February)</h3>
+        <p style="margin-bottom:10px;"><strong>Optimal Crops:</strong> Wheat, Mustard, Chickpea, Potato, Carrot, Tomato, Cabbage, Cauliflower</p>
+        <p style="margin-bottom:6px;"><strong>Key Protection & Irrigation Advice:</strong></p>
+        <ul style="margin-left:22px; line-height:1.8; font-size:14px; color:var(--text-color);">
+            <li><strong>Frost & Chill Shielding:</strong> Cover young seedling rows with light agrofiber or thatch during freezing nighttime temperatures.</li>
+            <li><strong>Powdery Mildew Vigilance:</strong> Cool mornings with moderate humidity trigger powdery mildew. Spray wettable sulfur @ 3g/L.</li>
+            <li><strong>Irrigation Interval:</strong> Low evapotranspiration rates mean watering intervals can be extended by 4-6 days.</li>
+            <li><strong>Tillage Aeration:</strong> Deeply till and loosen heavy soils before sowing root crops to avoid tuber rot.</li>
+        </ul>
+    </div>
+
+    <!-- Universal Crop Health Rules -->
+    <div class="chart-card" style="margin-top:20px; border-left:5px solid #2e7d32;">
+        <h3>🌱 Universal Plant Pathology Rules (All Year Round)</h3>
+        <ul style="margin-left:22px; line-height:1.8; font-size:14px; color:var(--text-color);">
+            <li><strong>Crop Rotation:</strong> Never plant solanaceous crops (Tomato, Potato, Eggplant) back-to-back in the same soil patch.</li>
+            <li><strong>Tool Sterilization:</strong> Disinfect pruning shears in 70% isopropyl alcohol or 10% bleach solution between plants.</li>
+            <li><strong>Debris Disposal:</strong> Burn or deeply bury diseased crop foliage; never mix infected leaves into compost piles.</li>
+            <li><strong>Balanced Nutrition:</strong> Avoid excessive urea/nitrogen which produces soft, watery leaf tissue vulnerable to fungal penetrations.</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+
+{% block title %}LeafDoc — Agro Shop & Farmer Marketplace{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+        <div>
+            <h1>🛒 Agro Shop & Kisan Marketplace</h1>
+            <p class="subtitle" style="margin-bottom:0;">Order disease-resistant saplings, verified fungicides, or sell your own farm harvest directly.</p>
+        </div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <button type="button" class="btn" style="background:linear-gradient(135deg, #f57c00, #e65100); font-size:13.5px;" onclick="openSellModal()">
+                🌾 Sell Produce / Seeds
+            </button>
+            <button type="button" class="btn btn-outline" style="font-size:13.5px;" onclick="openCart()">
+                🛒 View Cart (<span id="shopCartBtnCount">0</span>)
+            </button>
+        </div>
+    </div>
+
+    <!-- Category Filter Tabs -->
+    <div class="filter-tabs" style="margin-top:20px;">
+        <a href="/shop" class="filter-tab-btn {% if not current_category %}active{% endif %}">🌱 All Products</a>
+        {% for cat in categories %}
+        <a href="/shop?category={{ cat }}" class="filter-tab-btn {% if current_category == cat %}active{% endif %}">{{ cat }}</a>
+        {% endfor %}
+    </div>
+
+    <!-- Products Grid -->
+    <div class="chart-grid" style="margin-top:15px;">
+        {% for p in products %}
+        <div class="chart-card" style="text-align:center; display:flex; flex-direction:column; justify-content:space-between;">
+            <div>
+                <div style="font-size:50px; margin-bottom:6px;">{{ p['emoji'] }}</div>
+                <div style="display:flex; justify-content:center; gap:6px; margin-bottom:8px; flex-wrap:wrap;">
+                    <span class="status-badge processing" style="font-size:11px;">{{ p['category'] }}</span>
+                    {% if p['in_stock'] == 1 %}
+                    <span class="status-badge delivered" style="font-size:11px;">In Stock</span>
+                    {% else %}
+                    <span class="status-badge cancelled" style="font-size:11px;">Out of Stock</span>
+                    {% endif %}
+                </div>
+                <h3 style="border:none; margin:4px 0; font-size:17.5px;">{{ p['product_name'] }}</h3>
+                <p style="color:var(--subtext-color); font-size:13px; min-height:38px; line-height:1.4;">{{ p['description'] }}</p>
+                <div style="font-size:11.5px; color:#2e7d32; font-weight:600; margin-top:4px;">
+                    🏷️ Seller: {{ p['seller_name'] }}
+                </div>
+            </div>
+
+            <div style="margin-top:16px; border-top:1px solid var(--border-color); padding-top:12px;">
+                <p style="font-size:24px; font-weight:700; color:var(--accent-green); margin-bottom:12px;">₹{{ p['price'] }}</p>
+
+                <div style="display:flex; align-items:center; justify-content:center; gap:6px; margin-bottom:10px;">
+                    <label style="margin:0; font-size:12.5px;">Qty:</label>
+                    <input type="number" id="shop-qty-{{ p['product_id'] }}" value="1" min="1" max="50" style="width:60px; padding:5px; text-align:center;">
+                </div>
+
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+                    <button type="button" class="btn btn-outline" style="padding:8px; font-size:12.5px; margin:0;"
+                            onclick="addToCartFromShop({{ p['product_id'] }}, '{{ p['product_name'] }}', {{ p['price'] }}, '{{ p['emoji'] }}')"
+                            {% if p['in_stock'] != 1 %}disabled style="opacity:0.5; cursor:not-allowed;"{% endif %}>
+                        🛒 Add to Cart
+                    </button>
+                    <button type="button" class="btn" style="padding:8px; font-size:12.5px; margin:0;"
+                            onclick="buyNowSingle({{ p['product_id'] }}, '{{ p['product_name'] }}', {{ p['price'] }}, '{{ p['emoji'] }}')"
+                            {% if p['in_stock'] != 1 %}disabled style="opacity:0.5; cursor:not-allowed;"{% endif %}>
+                        ⚡ Buy Now
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Modal: Sell Produce / Seeds (Farmer Marketplace) -->
+<div class="checkout-overlay no-print" id="sellProduceModal">
+    <div class="checkout-modal">
+        <h2>🌾 List Produce or Seeds for Sale</h2>
+        <p style="color:var(--subtext-color); font-size:13px; margin-bottom:14px;">Sell your disease-free harvest, certified seed tubers, or saplings to fellow farmers.</p>
+
+        <form action="/shop/add-product" method="POST">
+            <div class="form-group" style="max-width:100%;">
+                <label>Product / Crop Item Name</label>
+                <input type="text" name="product_name" required placeholder="e.g. Organic Moong Seeds (1kg) or Fresh Red Chili">
+            </div>
+
+            <div style="display:flex; gap:10px;">
+                <div class="form-group" style="flex:1;">
+                    <label>Price (₹ INR)</label>
+                    <input type="number" name="price" required step="0.5" placeholder="e.g. 120">
+                </div>
+                <div class="form-group" style="flex:1;">
+                    <label>Emoji Icon</label>
+                    <input type="text" name="emoji" placeholder="🌾, 🍅, 🥔, 🌶️" value="🌾">
+                </div>
+            </div>
+
+            <div class="form-group" style="max-width:100%;">
+                <label>Marketplace Category</label>
+                <select name="category">
+                    <option value="Farmer Harvest">🌾 Farmer Harvest Produce</option>
+                    <option value="Plants & Seeds">🌱 Seeds & Young Saplings</option>
+                    <option value="Organic Treatments">🧴 Bio / Organic Farm Sprays</option>
+                    <option value="Fertilizers">🌱 Compost & Manure</option>
+                </select>
+            </div>
+
+            <div class="form-group" style="max-width:100%;">
+                <label>Brief Description</label>
+                <textarea name="description" placeholder="Mention variety, harvest date, germination rate or organic certifications..." style="min-height:70px;"></textarea>
+            </div>
+
+            <button type="submit" class="btn" style="width:100%;">🚀 Post to Kisan Marketplace</button>
+            <button type="button" class="btn btn-secondary" style="width:100%; margin-top:8px;" onclick="closeSellModal()">Cancel</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function openSellModal() {
+    document.getElementById('sellProduceModal').classList.add('open');
+}
+
+function closeSellModal() {
+    document.getElementById('sellProduceModal').classList.remove('open');
+}
+
+function addToCartFromShop(id, name, price, emoji) {
+    const qtyInput = document.getElementById('shop-qty-' + id);
+    const qty = parseInt(qtyInput ? qtyInput.value : 1) || 1;
+    addToCart(id, name, price, emoji, qty);
+    updateShopCartCount();
+}
+
+function buyNowSingle(id, name, price, emoji) {
+    const qtyInput = document.getElementById('shop-qty-' + id);
+    const qty = parseInt(qtyInput ? qtyInput.value : 1) || 1;
+    addToCart(id, name, price, emoji, qty);
+    openCartCheckout();
+}
+
+function updateShopCartCount() {
+    const cart = getCart();
+    const count = cart.reduce((sum, item) => sum + item.quantity, 0);
+    const btnCount = document.getElementById('shopCartBtnCount');
+    if (btnCount) btnCount.innerText = count;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    updateShopCartCount();
+});
+</script>
+{% endblock %}

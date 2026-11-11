@@ -1,0 +1,274 @@
+{% extends "base.html" %}
+
+{% block title %}LeafDoc — Regional Disease Dashboard & Hotspots{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+        <div>
+            <h1>📊 Regional Plant Pathology & Outbreak Radar</h1>
+            <p class="subtitle" style="margin-bottom:0;">Live epidemiological disease tracking, geospatial hotspot clusters, and proximity radar</p>
+        </div>
+        <div style="display:flex; gap:8px;">
+            <button type="button" class="btn btn-gps" onclick="locateUserGPS()">
+                📍 Locate My Farm (GPS)
+            </button>
+            <a href="/" class="btn" style="font-size:13.5px;">📸 Scan New Leaf</a>
+        </div>
+    </div>
+
+    <!-- Real-Time Outbreak Proximity Alert Banner (Dynamically Calculated) -->
+    <div id="proximityAlertBox" class="proximity-alert" style="display:none;">
+        <div style="display:flex; align-items:center; gap:10px;">
+            <span style="font-size:26px;">⚠️</span>
+            <div>
+                <div id="proximityAlertTitle">Nearby Crop Disease Alert</div>
+                <div id="proximityAlertMsg" style="font-size:12.5px; font-weight:400; color:#bf360c; margin-top:2px;"></div>
+            </div>
+        </div>
+        <button type="button" class="btn" style="background:#e65100; font-size:12px; padding:6px 14px;" onclick="window.location.href='/shop'">
+            🛒 Get Preventive Spray
+        </button>
+    </div>
+
+    <!-- Metric Cards -->
+    <div class="chart-grid" style="margin-top:20px; margin-bottom:15px;">
+        <div class="chart-card" style="text-align:center; border-top:4px solid #2e7d32;">
+            <h3>Total Disease Scans</h3>
+            <p style="font-size:36px; font-weight:700; color:var(--accent-green); margin:0;">{{ total_scans }}</p>
+        </div>
+        <div class="chart-card" style="text-align:center; border-top:4px solid #e65100;">
+            <h3>Most Common Disease</h3>
+            <p style="font-size:19px; font-weight:700; color:#e65100; margin:4px 0;">{{ most_common_disease }}</p>
+        </div>
+        <div class="chart-card" style="text-align:center; border-top:4px solid #2196f3;">
+            <h3>Healthy Crop Rate</h3>
+            <p style="font-size:36px; font-weight:700; color:#2196f3; margin:0;">{{ healthy_percent }}%</p>
+        </div>
+    </div>
+
+    <!-- Hotspot Map Card -->
+    <div class="chart-card" style="margin-top:20px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:8px;">
+            <h3>🗺️ Regional Disease Hotspot Geospatial Map</h3>
+            <span style="font-size:12.5px; color:var(--subtext-color);" id="gpsStatusText">Click 'Locate My Farm' to find your distance to outbreaks.</span>
+        </div>
+        <div id="hotspotMap" style="height:380px; border-radius:12px; border:1px solid var(--border-color); position:relative; z-index:1;"></div>
+    </div>
+
+    <!-- Visual Charts Grid -->
+    <div class="chart-grid" style="margin-top:20px;">
+        <div class="chart-card">
+            <h3>📈 Disease Frequency Distribution</h3>
+            <div style="position:relative; height:260px;">
+                <canvas id="diseaseChart"></canvas>
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <h3>📍 Regional Detection Share</h3>
+            <div style="position:relative; height:260px;">
+                <canvas id="regionChart"></canvas>
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <h3>📅 Outbreak Timeline</h3>
+            <div style="position:relative; height:260px;">
+                <canvas id="timeChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+const diseaseLabels = {{ disease_labels | tojson }};
+const diseaseValues = {{ disease_values | tojson }};
+const regionLabels = {{ region_labels | tojson }};
+const regionValues = {{ region_values | tojson }};
+const timeLabels = {{ time_labels | tojson }};
+const timeValues = {{ time_values | tojson }};
+const mapPoints = {{ map_points | tojson }};
+
+// --- 1. Charts Initialization ---
+if (diseaseLabels.length > 0) {
+    new Chart(document.getElementById('diseaseChart'), {
+        type: 'bar',
+        data: {
+            labels: diseaseLabels,
+            datasets: [{
+                label: 'Cases Detected',
+                data: diseaseValues,
+                backgroundColor: ['#43a047', '#fb8c00', '#e53935', '#8e24aa', '#1e88e5', '#3949ab'],
+                borderRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+        }
+    });
+}
+
+if (regionLabels.length > 0) {
+    new Chart(document.getElementById('regionChart'), {
+        type: 'doughnut',
+        data: {
+            labels: regionLabels,
+            datasets: [{
+                data: regionValues,
+                backgroundColor: ['#2e7d32', '#43a047', '#66bb6a', '#81c784', '#a5d6a7', '#c8e6c9']
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+    });
+}
+
+if (timeLabels.length > 0) {
+    new Chart(document.getElementById('timeChart'), {
+        type: 'line',
+        data: {
+            labels: timeLabels,
+            datasets: [{
+                label: 'Scans',
+                data: timeValues,
+                borderColor: '#2e7d32',
+                backgroundColor: 'rgba(46,125,50,0.12)',
+                fill: true,
+                tension: 0.35,
+                pointRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+        }
+    });
+}
+
+// --- 2. Leaflet Geospatial Map ---
+const map = L.map('hotspotMap').setView([20.5937, 78.9629], 5);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors'
+}).addTo(map);
+
+mapPoints.forEach(point => {
+    const radius = 8 + (point.count * 3.5);
+    const color = point.count > 5 ? '#c62828' : point.count > 2 ? '#ef6c00' : '#2e7d32';
+
+    L.circleMarker([point.lat, point.lng], {
+        radius: radius,
+        fillColor: color,
+        color: color,
+        weight: 2,
+        opacity: 0.85,
+        fillOpacity: 0.45
+    }).addTo(map).bindPopup(`<strong>📍 ${point.name}</strong><br>${point.count} crop scan(s) recorded`);
+});
+
+// --- 3. Live GPS Geolocation & Outbreak Proximity Radar ---
+let userMarker = null;
+let userCircle = null;
+
+function haversineDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371; // Earth radius in km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+}
+
+function locateUserGPS() {
+    if (!navigator.geolocation) {
+        alert('Geolocation is not supported by your browser.');
+        return;
+    }
+
+    document.getElementById('gpsStatusText').innerText = 'Acquiring GPS coordinates...';
+
+    navigator.geolocation.getCurrentPosition(
+        function(position) {
+            const userLat = position.coords.latitude;
+            const userLng = position.coords.longitude;
+            const accuracy = position.coords.accuracy;
+
+            if (userMarker) map.removeLayer(userMarker);
+            if (userCircle) map.removeLayer(userCircle);
+
+            // Add custom pulsating green farm icon
+            const farmIcon = L.divIcon({
+                className: 'custom-farm-pin',
+                html: '<div style="background:#2e7d32; color:white; border-radius:50%; width:34px; height:34px; display:flex; align-items:center; justify-content:center; font-size:18px; box-shadow:0 0 15px rgba(46,125,50,0.8); border:2px solid white;">🏡</div>',
+                iconSize: [34, 34],
+                iconAnchor: [17, 17]
+            });
+
+            userMarker = L.marker([userLat, userLng], { icon: farmIcon })
+                .addTo(map)
+                .bindPopup('<strong>📍 Your Farm / Current Location</strong><br>GPS Active').openPopup();
+
+            userCircle = L.circle([userLat, userLng], {
+                radius: Math.max(accuracy, 500),
+                color: '#2e7d32',
+                fillColor: '#66bb6a',
+                fillOpacity: 0.15,
+                weight: 1.5
+            }).addTo(map);
+
+            map.setView([userLat, userLng], 12);
+            document.getElementById('gpsStatusText').innerText = `📍 Located farm at ${userLat.toFixed(3)}°, ${userLng.toFixed(3)}° (±${Math.round(accuracy)}m)`;
+            showToast('Farm location pinned on map!', 'info');
+
+            // Compute distance to closest disease outbreak
+            let closestOutbreak = null;
+            let minDistance = Infinity;
+
+            mapPoints.forEach(p => {
+                const dist = haversineDistance(userLat, userLng, p.lat, p.lng);
+                if (dist < minDistance) {
+                    minDistance = dist;
+                    closestOutbreak = p;
+                }
+            });
+
+            if (closestOutbreak && minDistance < 100) {
+                const alertBox = document.getElementById('proximityAlertBox');
+                const alertTitle = document.getElementById('proximityAlertTitle');
+                const alertMsg = document.getElementById('proximityAlertMsg');
+
+                alertTitle.innerText = `⚠️ Nearby Outbreak: ${closestOutbreak.name} (${minDistance.toFixed(1)} km away)`;
+                alertMsg.innerText = `A disease cluster was detected ${minDistance.toFixed(1)} km from your farm. Consider applying preventive bio-fungicide protection.`;
+                alertBox.style.display = 'flex';
+            }
+        },
+        function(error) {
+            document.getElementById('gpsStatusText').innerText = 'Could not access GPS. Please allow location access in browser settings.';
+            showToast('GPS access permission denied.', 'error');
+        },
+        { enableHighAccuracy: true, timeout: 8000 }
+    );
+}
+
+// Auto-trigger GPS location if previously saved in session
+document.addEventListener('DOMContentLoaded', function() {
+    {% if session.get('lat') and session.get('lon') %}
+        // If coords already exist, center nearby
+        map.setView([{{ session.get('lat') }}, {{ session.get('lon') }}], 9);
+    {% endif %}
+});
+</script>
+{% endblock %}

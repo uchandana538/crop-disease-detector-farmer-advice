@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}LeafDoc — Farmer Registration{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:460px; margin-top:45px;">
+    <div style="font-size:48px; margin-bottom:8px;">🌱</div>
+    <h1>Create Farmer Account</h1>
+    <p class="subtitle">Join LeafDoc to detect crop diseases and receive personalized farm prescriptions.</p>
+
+    {% if error %}
+    <div class="flash-msg error" style="margin-bottom:16px;">
+        <span>{{ error }}</span>
+    </div>
+    {% endif %}
+
+    <form action="/signup" method="POST" style="display:flex; flex-direction:column; align-items:center;">
+        <div class="form-group">
+            <label>Full Name</label>
+            <input type="text" name="name" required placeholder="e.g. Ramesh Gowda">
+        </div>
+
+        <div class="form-group">
+            <label>Phone Number (Login ID)</label>
+            <input type="text" name="phone" required placeholder="e.g. 9876543210" autocomplete="tel">
+        </div>
+
+        <div class="form-group">
+            <label>Farm Region / District</label>
+            <input type="text" name="region" required placeholder="e.g. Bengaluru, Hubli, Mysuru">
+            <span style="font-size:11.5px; color:var(--subtext-color);">Enables live localized disease outbreak warnings</span>
+        </div>
+
+        <div class="form-group">
+            <label>Password</label>
+            <input type="password" name="password" required placeholder="Create secure password" autocomplete="new-password">
+        </div>
+
+        <button type="submit" style="width:100%; max-width:420px; margin-top:8px;">Register & Start</button>
+    </form>
+
+    <div class="link-row" style="margin-top:22px; font-size:14px;">
+        <span style="color:var(--subtext-color);">Already registered?</span>
+        <a href="/login" style="font-weight:700; color:var(--accent-green);">Sign In</a>
+    </div>
+</div>
+{% endblock %}

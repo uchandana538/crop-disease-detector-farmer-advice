@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}LeafDoc — Diagnostic History Log{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+        <div>
+            <h1>📋 Historical Scan Logbook</h1>
+            <p class="subtitle" style="margin-bottom:0;">Complete archive of all agricultural diagnostics recorded in the database.</p>
+        </div>
+        <a href="/" class="btn" style="font-size:14px;">📸 Scan New Leaf</a>
+    </div>
+
+    <div style="margin:20px 0 15px 0;">
+        <input type="text" id="searchBox" onkeyup="filterHistory()" placeholder="🔍 Search records by disease, crop, plot name, or region..." style="width:100%; max-width:440px;">
+    </div>
+
+    {% if records %}
+    <div class="chart-card" style="overflow-x:auto;">
+        <table style="width:100%; border-collapse:collapse;" id="historyTable">
+            <thead>
+                <tr style="background:var(--accent-light); text-align:left;">
+                    <th style="padding:12px;">Scan #</th>
+                    <th style="padding:12px;">Diagnosed Condition</th>
+                    <th style="padding:12px;">Crop</th>
+                    <th style="padding:12px;">Plot / Field</th>
+                    <th style="padding:12px;">Region</th>
+                    <th style="padding:12px;">Confidence</th>
+                    <th style="padding:12px;">Severity</th>
+                    <th style="padding:12px;">Detected On</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in records %}
+                <tr style="border-bottom:1px solid var(--border-color);">
+                    <td style="padding:12px; font-weight:600;">#{{ row['detection_id'] }}</td>
+                    <td style="padding:12px; font-weight:600;">
+                        <span style="color:var(--accent-green);">{{ row['disease_name'] }}</span>
+                    </td>
+                    <td style="padding:12px;">{{ row['crop_type'] }}</td>
+                    <td style="padding:12px; color:var(--subtext-color);">{{ row['plot_name'] }}</td>
+                    <td style="padding:12px;">{{ row['region'] }}</td>
+                    <td style="padding:12px; font-weight:600;">{{ row['confidence'] }}%</td>
+                    <td style="padding:12px;">
+                        <span class="status-badge {% if row['severity'] == 'Severe' %}cancelled{% elif row['severity'] == 'Moderate' %}pending{% else %}delivered{% endif %}">
+                            {{ row['severity'] }}
+                        </span>
+                    </td>
+                    <td style="padding:12px; color:var(--subtext-color); font-size:13px;">{{ row['detected_on'] }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="chart-card" style="text-align:center; padding:40px 20px;">
+        <p style="color:var(--subtext-color);">No detection records saved yet. <a href="/">Upload a leaf photo</a> to begin.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function filterHistory() {
+    const input = document.getElementById('searchBox').value.toLowerCase();
+    const rows = document.getElementById('historyTable').getElementsByTagName('tr');
+    for (let i = 1; i < rows.length; i++) {
+        const text = rows[i].innerText.toLowerCase();
+        rows[i].style.display = text.includes(input) ? '' : 'none';
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}LeafDoc — Farmer Profile{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:480px;">
+    <div style="font-size:54px; margin-bottom:6px;">👤</div>
+    <h1>Farmer Profile</h1>
+    <p class="subtitle">Manage your account details and farm location.</p>
+
+    {% if message %}
+    <div class="flash-msg success" style="margin-bottom:18px;">
+        <span>{{ message }}</span>
+    </div>
+    {% endif %}
+
+    <form method="POST" action="/profile" style="display:flex; flex-direction:column; align-items:center;">
+        <div class="form-group">
+            <label>Full Name</label>
+            <input type="text" name="name" value="{{ farmer['name'] }}" required>
+        </div>
+
+        <div class="form-group">
+            <label>Registered Phone Number</label>
+            <input type="text" value="{{ farmer['phone'] }}" disabled style="background:#f5f5f5; color:#888; cursor:not-allowed;">
+            <span style="font-size:11.5px; color:var(--subtext-color);">Phone number is fixed as your login identifier</span>
+        </div>
+
+        <div class="form-group">
+            <label>Farm Region / City</label>
+            <input type="text" name="region" value="{{ farmer['region'] }}" required>
+            <span style="font-size:11.5px; color:var(--subtext-color);">Used for live weather and localized disease risk tracking</span>
+        </div>
+
+        <div class="form-group">
+            <label>New Password (leave blank to keep existing)</label>
+            <input type="password" name="password" placeholder="Enter new password if updating">
+        </div>
+
+        <button type="submit" style="width:100%; max-width:420px; margin-top:10px;">💾 Save Changes</button>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,18 @@
+detection_id,farmer_id,farmer_name,farmer_region,crop_type,severity,confidence,latitude,longitude,detected_on,disease_name
+1,5,tejuu,bangalore,Other,Moderate,74.29,,,2026-09-01,Leaf Rust
+2,5,tejuu,bangalore,Other,Moderate,74.29,,,2026-09-01,Leaf Rust
+3,1,Admin,bangalore,Tomato,Severe,96.0,,,2026-09-02,Tomato Leaf Blight
+4,7,Chandana U,bengalore,Tomato,Moderate,77.2,,,2026-09-02,Tomato Yellow Leaf Curl
+5,7,Chandana U,bengalore,Tomato,Moderate,77.2,,,2026-09-02,Tomato Yellow Leaf Curl
+6,7,Chandana U,bengalore,Tomato,Moderate,84.6,,,2026-09-02,Tomato Yellow Leaf Curl
+7,7,Chandana U,bengalore,Maize,Moderate,84.6,,,2026-09-02,Maize Common Rust
+8,7,Chandana U,bengalore,Maize,None,94.5,,,2026-09-02,Healthy Leaf
+9,1,Admin,bangalore,Wheat,None,94.5,,,2026-09-02,Healthy Leaf
+10,1,Admin,bangalore,Tomato,Moderate,88.5,,,2026-09-02,Tomato Yellow Leaf Curl
+11,8,kruthi,hubli,Maize,Moderate,84.6,,,2026-09-07,Maize Common Rust
+12,9,sinchana,mysuru,Tomato,Moderate,88.5,13.141747949472968,77.54510663196191,2026-09-08,Tomato Yellow Leaf Curl
+13,8,kruthi,hubli,Tomato,Moderate,80.6,,,2026-09-08,Tomato Leaf Blight
+14,8,kruthi,hubli,Tomato,Moderate,88.5,,,2026-09-08,Tomato Yellow Leaf Curl
+15,8,kruthi,hubli,Maize,Severe,96.0,,,2026-09-08,Maize Common Rust
+16,8,kruthi,hubli,Tomato,Moderate,88.5,13.141701837499998,77.5450759125,2026-09-08,Tomato Yellow Leaf Curl
+17,9,sinchana,mysuru,Sugarcane,None,94.6,,,2026-09-08,Healthy Leaf

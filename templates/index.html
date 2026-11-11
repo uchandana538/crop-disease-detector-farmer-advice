@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+
+{% block title %}LeafDoc — Plant Disease Detection & Advisory{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 style="font-size:32px;">🌿 LeafDoc Scanner</h1>
+    <p class="subtitle">Your Plant's Personal Doctor — Upload a leaf photo to instantly diagnose disease, severity, and get doctor-certified treatment dosage.</p>
+
+    <!-- Seasonal Tip Card -->
+    <div class="info-card" style="margin-bottom:18px;">
+        <h3>🌤️ Seasonal Agricultural Advisory</h3>
+        <p style="font-size:14px; line-height:1.5;">{{ season_tip }}</p>
+    </div>
+
+    <!-- Live Weather Card with GPS Locating -->
+    <div class="info-card" id="weatherCard" style="margin-bottom:20px; border-left-color:
+        {% if weather and weather.risk == 'High' %}#c62828{% elif weather and weather.risk == 'Moderate' %}#ef6c00{% else %}#2e7d32{% endif %};">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+            <h3 id="weatherTitle">🌡️ Live Farm Weather — <span id="weatherRegionName">{{ session.get('region', 'Local Region') }}</span></h3>
+            <button type="button" class="btn-gps" onclick="fetchGPSWeather()" id="gpsWeatherBtn">
+                📍 Use Live GPS Weather
+            </button>
+        </div>
+
+        {% if weather %}
+        <div id="weatherContent">
+            <p style="font-size:24px; font-weight:700; margin:4px 0;" id="weatherTempRow">
+                <span id="weatherTemp">{{ weather.temp }}</span>°C
+                <span style="font-size:13px; font-weight:400; color:var(--subtext-color);" id="weatherDetails">
+                    | Humidity: <span id="weatherHumidity">{{ weather.humidity }}</span>% | Rain: <span id="weatherRain">{{ weather.rain }}</span>mm
+                </span>
+            </p>
+            <p style="font-weight:600; font-size:14px; color:{% if weather.risk == 'High' %}#c62828{% elif weather.risk == 'Moderate' %}#ef6c00{% else %}#2e7d32{% endif %};" id="weatherRiskText">
+                Disease Risk Alert: <span id="weatherRiskVal">{{ weather.risk }}</span>
+            </p>
+            <p style="font-size:13px; color:var(--subtext-color); margin-top:3px;" id="weatherRiskMsg">{{ weather.risk_msg }}</p>
+        </div>
+        {% else %}
+        <div id="weatherContent">
+            <p style="font-size:13.5px; color:var(--subtext-color); margin-top:6px;">Click 'Use Live GPS Weather' to fetch live farm conditions.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Diagnostic Upload Form -->
+    <form action="/predict" method="POST" enctype="multipart/form-data" id="uploadForm" style="display:flex; flex-direction:column; align-items:center;">
+        <input type="hidden" name="latitude" id="uploadLat">
+        <input type="hidden" name="longitude" id="uploadLon">
+
+        <div class="form-group">
+            <label for="crop_type">Select Crop Type</label>
+            <select name="crop_type" id="crop_type" required>
+                <option value="Tomato">🍅 Tomato</option>
+                <option value="Potato">🥔 Potato</option>
+                <option value="Wheat">🌾 Wheat</option>
+                <option value="Rice">🌾 Rice (Paddy)</option>
+                <option value="Chili">🌶️ Chili Pepper</option>
+                <option value="Cotton">🌿 Cotton</option>
+                <option value="Sugarcane">🎋 Sugarcane</option>
+                <option value="Maize">🌽 Maize (Corn)</option>
+                <option value="Other">🌱 Other Crops</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="plot_name">Plot / Field Name (optional)</label>
+            <input type="text" id="plot_name" name="plot_name" placeholder="e.g. North Acre #2 or Green House Plot">
+        </div>
+
+        <div class="form-group">
+            <label>Leaf Photograph</label>
+            <label class="upload-box" for="leafFileInput" style="margin:6px 0 0 0; width:100%; max-width:100%;">
+                <span class="upload-icon">📸</span>
+                <div class="upload-label-text">Click to choose or drop a leaf image</div>
+                <div class="upload-sublabel">Supports JPG, PNG, WEBP — Clear close-up photo recommended</div>
+                <div class="file-name-display" id="fileNameDisplay"></div>
+                <img id="imagePreview" class="img-preview-box" alt="Leaf Preview">
+                <input type="file" id="leafFileInput" name="leaf_image" accept="image/png, image/jpeg, image/jpg, image/webp" required onchange="handleFileSelect(this)">
+            </label>
+        </div>
+
+        <button type="submit" id="submitBtn" style="margin-top:10px; width:100%; max-width:440px; font-size:16px;">
+            🔍 Analyze & Generate Prescription
+        </button>
+    </form>
+
+    <div id="loadingBox" style="display:none; margin-top:24px;">
+        <div class="spinner"></div>
+        <p style="color:var(--accent-green); font-weight:600; margin-top:12px;">Analyzing leaf color spectra & pathology symptoms...</p>
+    </div>
+
+    <!-- Recent Scans Section -->
+    {% if recent_scans %}
+    <div style="margin-top:35px; text-align:left;">
+        <h3 style="color:var(--accent-green); margin-bottom:12px; font-size:18px;">🕒 Your Recent Scans</h3>
+        {% for scan in recent_scans %}
+        <div class="info-card" style="margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
+            <div>
+                <strong>{{ scan['disease_name'] }}</strong>
+                <span style="font-size:12.5px; color:var(--subtext-color);">({{ scan['crop_type'] }})</span>
+                <div style="font-size:12.5px; margin-top:3px;">
+                    Confidence: <strong>{{ scan['confidence'] }}%</strong> | Severity:
+                    <span class="status-badge {% if scan['severity'] == 'Severe' %}cancelled{% elif scan['severity'] == 'Moderate' %}pending{% else %}delivered{% endif %}">
+                        {{ scan['severity'] }}
+                    </span>
+                </div>
+            </div>
+            <span style="color:var(--subtext-color); font-size:12px;">{{ scan['detected_on'] }}</span>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Success Stories Carousel -->
+    <div style="margin-top:30px; text-align:left;">
+        <h3 style="color:var(--accent-green); margin-bottom:10px; font-size:17px;">🌟 Farmer Success Stories</h3>
+        <div id="storyCarousel" class="info-card" style="min-height:65px;">
+            <p id="storyText" style="font-size:13.5px; line-height:1.5;"></p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.getElementById('uploadForm').addEventListener('submit', function() {
+    document.getElementById('submitBtn').style.display = 'none';
+    document.getElementById('loadingBox').style.display = 'block';
+});
+
+function handleFileSelect(input) {
+    const display = document.getElementById('fileNameDisplay');
+    const preview = document.getElementById('imagePreview');
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        display.innerText = '✅ ' + file.name;
+        display.style.display = 'inline-block';
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            preview.src = e.target.result;
+            preview.style.display = 'inline-block';
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+// GPS Hyper-Local Weather Fetcher
+function fetchGPSWeather() {
+    if (!navigator.geolocation) {
+        showToast('Geolocation is not supported by your browser.', 'error');
+        return;
+    }
+
+    const btn = document.getElementById('gpsWeatherBtn');
+    btn.innerText = '⏳ Locating...';
+
+    navigator.geolocation.getCurrentPosition(
+        function(pos) {
+            const lat = pos.coords.latitude;
+            const lon = pos.coords.longitude;
+
+            // Set hidden inputs in upload form
+            document.getElementById('uploadLat').value = lat;
+            document.getElementById('uploadLon').value = lon;
+
+            fetch(`/api/weather/gps?lat=${lat}&lon=${lon}`)
+                .then(r => r.json())
+                .then(data => {
+                    btn.innerText = '📍 Live GPS Active';
+                    if (data.success && data.weather) {
+                        const w = data.weather;
+                        document.getElementById('weatherRegionName').innerText = w.region;
+                        document.getElementById('weatherContent').innerHTML = `
+                            <p style="font-size:24px; font-weight:700; margin:4px 0;">
+                                ${w.temp}°C
+                                <span style="font-size:13px; font-weight:400; color:var(--subtext-color);">
+                                    | Humidity: ${w.humidity}% | Rain: ${w.rain}mm
+                                </span>
+                            </p>
+                            <p style="font-weight:600; font-size:14px; color:${w.risk === 'High' ? '#c62828' : (w.risk === 'Moderate' ? '#ef6c00' : '#2e7d32')};">
+                                Disease Risk Alert: ${w.risk}
+                            </p>
+                            <p style="font-size:13px; color:var(--subtext-color); margin-top:3px;">${w.risk_msg}</p>
+                        `;
+                        const card = document.getElementById('weatherCard');
+                        card.style.borderLeftColor = w.risk === 'High' ? '#c62828' : (w.risk === 'Moderate' ? '#ef6c00' : '#2e7d32');
+                        showToast(`Weather updated for ${w.region}!`, 'success');
+                    }
+                })
+                .catch(err => {
+                    btn.innerText = '📍 Use Live GPS Weather';
+                    showToast('Failed to fetch GPS weather.', 'error');
+                });
+        },
+        function(err) {
+            btn.innerText = '📍 Use Live GPS Weather';
+            showToast('GPS permission was denied.', 'error');
+        },
+        { timeout: 7000 }
+    );
+}
+
+const stories = [
+    "🌾 Ramesh in Bengaluru treated Leaf Blight in 5 days using the exact dosage prescription!",
+    "🍅 Priya in Mysuru caught Bacterial Spot early, saving her entire 2-acre tomato crop.",
+    "🥔 Suresh in Hubli used LeafDoc to isolate Late Blight before it infected nearby potato fields.",
+    "🌶️ Lakshmi in Mangalore resolved Chili Powdery Mildew with recommended organic sulfur spray."
+];
+let storyIndex = 0;
+function rotateStory() {
+    document.getElementById('storyText').innerText = stories[storyIndex];
+    storyIndex = (storyIndex + 1) % stories.length;
+}
+rotateStory();
+setInterval(rotateStory, 4500);
+</script>
+{% endblock %}

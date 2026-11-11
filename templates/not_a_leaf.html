@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}LeafDoc — Image Not Recognized{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:520px; text-align:center;">
+    <div style="font-size:64px; margin-bottom:10px;">🤔🍃</div>
+    <h1>Image Not Recognized as Foliage</h1>
+    <p class="subtitle" style="margin-bottom:18px;">Our plant pathology scanner could not identify distinctive plant leaf chlorophyll or leaf structure in this photograph.</p>
+
+    <img src="{{ url_for('static', filename='uploads/' + image_file) }}" style="width:220px; height:220px; object-fit:cover; border-radius:12px; margin:10px 0 20px 0; border:2px solid var(--border-color);" alt="Uploaded Image">
+
+    <div class="info-card" style="text-align:left; font-size:13.5px;">
+        <h4 style="color:var(--accent-green); margin-bottom:6px;">📸 Scanning Tips for Best Results:</h4>
+        <ul style="margin-left:18px; line-height:1.6; color:var(--text-color);">
+            <li>Place the plant leaf under natural, bright lighting.</li>
+            <li>Fill at least 60-80% of the photograph with the leaf.</li>
+            <li>Ensure the camera is in sharp focus without blur.</li>
+        </ul>
+    </div>
+
+    <div class="link-row" style="margin-top:24px;">
+        <a href="/" class="btn">⬅ Try Scanning Again</a>
+    </div>
+</div>
+{% endblock %}

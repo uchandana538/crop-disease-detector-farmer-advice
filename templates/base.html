@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}LeafDoc — Smart Crop Disease Advisory{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <!-- Main Top Navigation -->
+    <div class="navbar no-print">
+        <h2><a href="/">🌿 LeafDoc</a></h2>
+        <div class="nav-links">
+            {% if session.get('farmer_id') %}
+                <a href="/" class="{% if request.path == '/' %}active{% endif %}">Home</a>
+                <a href="/dashboard" class="{% if request.path == '/dashboard' %}active{% endif %}">Dashboard</a>
+                <a href="/history" class="{% if request.path == '/history' %}active{% endif %}">History</a>
+
+                <div class="nav-dropdown" id="navDropdown">
+                    <button class="nav-dropdown-btn" onclick="toggleNavDropdown()">More ▾</button>
+                    <div class="nav-dropdown-content">
+                        <a href="/planting-guide">📅 Planting Guide</a>
+                        <a href="/shop">🛒 Agro Shop & Market</a>
+                        <a href="/orders">📦 My Orders</a>
+                        <a href="/forum">💬 Community Forum</a>
+                        <a href="/profile">👤 My Profile</a>
+                        {% if session.get('is_admin') == 1 %}
+                        <a href="/admin" style="font-weight:700; color:var(--accent-green) !important; background:var(--accent-light);">🛠️ Admin Portal</a>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="user-tag">
+                    <span>🌾 {{ session.get('name', 'Farmer') }}</span>
+                </div>
+
+                <!-- Shopping Cart Button with Live Counter Badge -->
+                <button class="nav-cart-btn" onclick="openCart()" title="View Shopping Cart">
+                    🛒 Cart <span class="cart-badge" id="navCartCount">0</span>
+                </button>
+
+                <a href="/logout" style="background:rgba(255,255,255,0.12); margin-left:4px;">Logout</a>
+            {% else %}
+                <a href="/login" class="{% if request.path == '/login' %}active{% endif %}">Login</a>
+                <a href="/signup" class="{% if request.path == '/signup' %}active{% endif %}">Sign Up</a>
+            {% endif %}
+            <button id="darkModeToggle" onclick="toggleDarkMode()" title="Toggle Dark/Light Mode">🌙</button>
+        </div>
+    </div>
+
+    <!-- Flash Messages Container -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-container no-print">
+          {% for category, message in messages %}
+            <div class="flash-msg {{ category }}">
+                <span>{{ message }}</span>
+                <span style="cursor:pointer; opacity:0.7;" onclick="this.parentElement.remove()">✕</span>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <!-- Page Content Block -->
+    {% block content %}{% endblock %}
+
+    <!-- Multi-Item Shopping Cart Drawer Panel -->
+    <div class="cart-drawer-overlay no-print" id="cartOverlay" onclick="closeCart()"></div>
+    <div class="cart-drawer no-print" id="cartDrawer">
+        <div class="cart-drawer-header">
+            <h3>🛒 Your Farming Cart</h3>
+            <span style="cursor:pointer; font-size:20px;" onclick="closeCart()" title="Close">✕</span>
+        </div>
+
+        <div class="cart-items-list" id="cartItemsContainer">
+            <!-- Dynamic Cart Items Rendered via JS -->
+        </div>
+
+        <div class="cart-drawer-footer">
+            <div class="cart-subtotal-row">
+                <span>Subtotal:</span>
+                <span style="color:var(--accent-green); font-size:18px;" id="cartTotalDisplay">₹0</span>
+            </div>
+            <button type="button" class="btn" style="width:100%; font-size:15px;" onclick="openCartCheckout()">
+                Proceed to Checkout
+            </button>
+            <button type="button" class="btn btn-secondary" style="width:100%; margin-top:8px; font-size:12.5px; padding:7px;" onclick="clearCart()">
+                Clear Cart
+            </button>
+        </div>
+    </div>
+
+    <!-- Multi-Item Cart Checkout Modal -->
+    <div class="checkout-overlay no-print" id="cartCheckoutModal">
+        <div class="checkout-modal">
+            <div id="cartCheckoutStep1">
+                <h2>💳 Complete Your Farm Order</h2>
+                <p style="color:var(--subtext-color); font-size:13px; margin-bottom:12px;" id="cartCheckoutSummaryText"></p>
+
+                <div style="background:var(--bg-light); padding:10px 14px; border-radius:8px; margin-bottom:14px; max-height:140px; overflow-y:auto;" id="checkoutMiniList"></div>
+
+                <div class="form-group" style="max-width:100%;">
+                    <label>📍 Farm / Village Delivery Address</label>
+                    <input type="text" id="cartDeliveryAddress" required placeholder="e.g. Survey #12, Near Panchayat, Hubli" value="{{ session.get('region', '') }}">
+                </div>
+
+                <div class="form-group" style="max-width:100%;">
+                    <label>📞 Contact Phone for Delivery</label>
+                    <input type="tel" id="cartContactPhone" required placeholder="e.g. 9876543210" value="{{ session.get('phone', '') }}">
+                </div>
+
+                <div class="form-group" style="max-width:100%;">
+                    <label>Payment Method</label>
+                    <div class="pay-method-tabs">
+                        <button type="button" class="active" onclick="selectCartPayMethod('Card', this)">💳 Card</button>
+                        <button type="button" onclick="selectCartPayMethod('UPI', this)">📱 UPI</button>
+                        <button type="button" onclick="selectCartPayMethod('COD', this)">💵 Cash on Delivery</button>
+                    </div>
+                </div>
+
+                <button type="button" class="btn" style="width:100%; margin-top:8px;" onclick="submitCartOrder()">
+                    Confirm & Place Order
+                </button>
+                <button type="button" class="btn btn-secondary" style="width:100%; margin-top:8px;" onclick="closeCartCheckout()">
+                    Back to Shopping
+                </button>
+            </div>
+
+            <div id="cartCheckoutStep2" style="display:none; text-align:center; padding:25px 0;">
+                <div class="spinner"></div>
+                <p style="color:#2e7d32; font-weight:600; margin-top:14px;">Placing your agro supplies order...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Global Toast Notification Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Background Floating Plant Emojis -->
+    <div class="floating-deco no-print" style="top:18%; left:4%;">🌿</div>
+    <div class="floating-deco no-print" style="top:62%; right:6%; animation-delay:2.5s;">🍃</div>
+    <div class="floating-deco no-print" style="bottom:12%; left:8%; animation-delay:4.5s;">🌾</div>
+
+    <!-- AI Chatbot (for logged in users) -->
+    {% if session.get('farmer_id') %}
+        {% include 'chatbot.html' %}
+    {% endif %}
+
+    <!-- Global Base & Shopping Cart Scripts -->
+    <script>
+    // --- Dark Mode Handler ---
+    function toggleDarkMode() {
+        document.body.classList.toggle('dark-mode');
+        const isDark = document.body.classList.contains('dark-mode');
+        localStorage.setItem('darkMode', isDark);
+        const btn = document.getElementById('darkModeToggle');
+        if (btn) btn.innerText = isDark ? '☀️' : '🌙';
+    }
+
+    if (localStorage.getItem('darkMode') === 'true') {
+        document.body.classList.add('dark-mode');
+        const btn = document.getElementById('darkModeToggle');
+        if (btn) btn.innerText = '☀️';
+    }
+
+    // --- Dropdown Handler ---
+    function toggleNavDropdown() {
+        const dropdown = document.getElementById('navDropdown');
+        if (dropdown) dropdown.classList.toggle('open');
+    }
+
+    document.addEventListener('click', function(e) {
+        const dropdown = document.getElementById('navDropdown');
+        if (dropdown && !dropdown.contains(e.target)) {
+            dropdown.classList.remove('open');
+        }
+    });
+
+    // --- Toast Notifications ---
+    function showToast(msg, type = 'success') {
+        const container = document.getElementById('toastContainer');
+        if (!container) return;
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        const icon = type === 'success' ? '✅' : (type === 'error' ? '⚠️' : '📍');
+        toast.innerHTML = `<span>${icon}</span><span>${msg}</span>`;
+        container.appendChild(toast);
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateY(10px)';
+            toast.style.transition = 'all 0.3s ease';
+            setTimeout(() => toast.remove(), 300);
+        }, 3200);
+    }
+
+    // --- Multi-Item Shopping Cart Logic ---
+    let cartPaymentMethod = 'Card';
+
+    function getCart() {
+        try {
+            return JSON.parse(localStorage.getItem('leafdoc_cart')) || [];
+        } catch (e) {
+            return [];
+        }
+    }
+
+    function saveCart(cart) {
+        localStorage.setItem('leafdoc_cart', JSON.stringify(cart));
+        updateCartBadge();
+        renderCartItems();
+    }
+
+    function updateCartBadge() {
+        const cart = getCart();
+        const count = cart.reduce((total, item) => total + item.quantity, 0);
+        const badge = document.getElementById('navCartCount');
+        if (badge) badge.innerText = count;
+    }
+
+    function addToCart(productId, productName, price, emoji, qty = 1) {
+        let cart = getCart();
+        const existing = cart.find(i => i.product_id === productId);
+        if (existing) {
+            existing.quantity += qty;
+        } else {
+            cart.push({
+                product_id: productId,
+                product_name: productName,
+                price: parseFloat(price),
+                emoji: emoji || '📦',
+                quantity: qty
+            });
+        }
+        saveCart(cart);
+        showToast(`Added ${productName} to cart!`, 'success');
+    }
+
+    function updateCartQty(productId, delta) {
+        let cart = getCart();
+        const item = cart.find(i => i.product_id === productId);
+        if (item) {
+            item.quantity += delta;
+            if (item.quantity <= 0) {
+                cart = cart.filter(i => i.product_id !== productId);
+            }
+        }
+        saveCart(cart);
+    }
+
+    function removeFromCart(productId) {
+        let cart = getCart().filter(i => i.product_id !== productId);
+        saveCart(cart);
+        showToast('Item removed from cart.', 'info');
+    }
+
+    function clearCart() {
+        saveCart([]);
+        showToast('Cart cleared.', 'info');
+    }
+
+    function renderCartItems() {
+        const container = document.getElementById('cartItemsContainer');
+        const totalDisplay = document.getElementById('cartTotalDisplay');
+        if (!container) return;
+
+        const cart = getCart();
+        if (cart.length === 0) {
+            container.innerHTML = `
+                <div style="text-align:center; padding:40px 10px; color:var(--subtext-color);">
+                    <div style="font-size:40px; margin-bottom:8px;">🛒</div>
+                    <p style="font-size:14px; margin:0;">Your cart is currently empty.</p>
+                    <p style="font-size:12px; margin-top:4px;">Browse the Agro Shop to add seeds and medicines.</p>
+                </div>
+            `;
+            if (totalDisplay) totalDisplay.innerText = '₹0';
+            return;
+        }
+
+        let total = 0;
+        let html = '';
+        cart.forEach(item => {
+            const itemTotal = item.price * item.quantity;
+            total += itemTotal;
+            html += `
+                <div class="cart-item-card">
+                    <div style="font-size:28px;">${item.emoji}</div>
+                    <div style="flex:1;">
+                        <div style="font-weight:600; font-size:13.5px;">${item.product_name}</div>
+                        <div style="font-size:12px; color:var(--subtext-color);">₹${item.price} each</div>
+                    </div>
+                    <div class="qty-control">
+                        <button class="qty-btn" onclick="updateCartQty(${item.product_id}, -1)">−</button>
+                        <span style="padding:0 8px; font-size:12px; font-weight:700;">${item.quantity}</span>
+                        <button class="qty-btn" onclick="updateCartQty(${item.product_id}, 1)">+</button>
+                    </div>
+                    <div style="font-weight:700; font-size:13.5px; color:#2e7d32; min-width:45px; text-align:right;">₹${itemTotal}</div>
+                    <button type="button" style="background:none; border:none; color:#c62828; cursor:pointer; font-size:15px; padding:2px;" onclick="removeFromCart(${item.product_id})" title="Remove">✕</button>
+                </div>
+            `;
+        });
+
+        container.innerHTML = html;
+        if (totalDisplay) totalDisplay.innerText = `₹${total.toFixed(0)}`;
+    }
+
+    function openCart() {
+        renderCartItems();
+        document.getElementById('cartOverlay').classList.add('open');
+        document.getElementById('cartDrawer').classList.add('open');
+    }
+
+    function closeCart() {
+        document.getElementById('cartOverlay').classList.remove('open');
+        document.getElementById('cartDrawer').classList.remove('open');
+    }
+
+    function selectCartPayMethod(method, btn) {
+        document.querySelectorAll('#cartCheckoutModal .pay-method-tabs button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        cartPaymentMethod = method;
+    }
+
+    function openCartCheckout() {
+        const cart = getCart();
+        if (cart.length === 0) {
+            showToast('Please add items to your cart first!', 'error');
+            return;
+        }
+        closeCart();
+
+        let total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        document.getElementById('cartCheckoutSummaryText').innerText = `${cart.length} item(s) in order • Total Payable: ₹${total}`;
+
+        let miniHtml = '';
+        cart.forEach(i => {
+            miniHtml += `<div style="display:flex; justify-content:space-between; font-size:12.5px; margin-bottom:4px;">
+                <span>${i.emoji} ${i.quantity}x ${i.product_name}</span>
+                <strong>₹${i.price * i.quantity}</strong>
+            </div>`;
+        });
+        document.getElementById('checkoutMiniList').innerHTML = miniHtml;
+
+        document.getElementById('cartCheckoutStep1').style.display = 'block';
+        document.getElementById('cartCheckoutStep2').style.display = 'none';
+        document.getElementById('cartCheckoutModal').classList.add('open');
+    }
+
+    function closeCartCheckout() {
+        document.getElementById('cartCheckoutModal').classList.remove('open');
+    }
+
+    function submitCartOrder() {
+        const cart = getCart();
+        if (cart.length === 0) return;
+
+        const address = document.getElementById('cartDeliveryAddress').value.trim();
+        const phone = document.getElementById('cartContactPhone').value.trim();
+
+        if (!address) {
+            alert('Please enter your farm delivery address.');
+            return;
+        }
+
+        document.getElementById('cartCheckoutStep1').style.display = 'none';
+        document.getElementById('cartCheckoutStep2').style.display = 'block';
+
+        fetch('/cart/checkout', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({
+                items: cart,
+                address: address,
+                phone: phone,
+                payment_method: cartPaymentMethod
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                clearCart();
+                window.location.href = '/orders';
+            } else {
+                alert('Checkout Error: ' + (data.error || 'Failed to place order'));
+                document.getElementById('cartCheckoutStep1').style.display = 'block';
+                document.getElementById('cartCheckoutStep2').style.display = 'none';
+            }
+        })
+        .catch(err => {
+            clearCart();
+            window.location.href = '/orders';
+        });
+    }
+
+    // Initialize cart badge on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        updateCartBadge();
+    });
+    </script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

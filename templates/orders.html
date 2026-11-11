@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}LeafDoc — My Agro Orders{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+        <div>
+            <h1>📦 My Agro Orders</h1>
+            <p class="subtitle" style="margin-bottom:0;">Track all your seeds, saplings, and fungicide orders.</p>
+        </div>
+        <div style="display:flex; gap:8px;">
+            <a href="/shop" class="btn" style="font-size:13.5px;">🛒 Shop Agro Supplies</a>
+            <button type="button" class="btn btn-outline" style="font-size:13.5px;" onclick="openCart()">
+                🛒 Cart (<span id="ordersPageCartCount">0</span>)
+            </button>
+        </div>
+    </div>
+
+    {% if orders %}
+    <div class="chart-card" style="overflow-x:auto; margin-top:25px;">
+        <table style="width:100%; border-collapse:collapse;">
+            <thead>
+                <tr style="background:var(--accent-light); text-align:left;">
+                    <th style="padding:12px;">Order #</th>
+                    <th style="padding:12px;">Product Item</th>
+                    <th style="padding:12px;">Qty</th>
+                    <th style="padding:12px;">Price</th>
+                    <th style="padding:12px;">Total</th>
+                    <th style="padding:12px;">Payment</th>
+                    <th style="padding:12px;">Delivery Address</th>
+                    <th style="padding:12px;">Status</th>
+                    <th style="padding:12px;">Ordered Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for o in orders %}
+                <tr style="border-bottom:1px solid var(--border-color);">
+                    <td style="padding:12px; font-weight:600;">#{{ o['order_id'] }}</td>
+                    <td style="padding:12px; font-weight:600;">
+                        {{ o['emoji'] if o['emoji'] else '📦' }}
+                        {{ o['product_name'] if o['product_name'] else 'Agro Supply Item' }}
+                    </td>
+                    <td style="padding:12px;">{{ o['quantity'] }}</td>
+                    <td style="padding:12px;">₹{{ o['price'] if o['price'] else 0 }}</td>
+                    <td style="padding:12px; font-weight:700; color:var(--accent-green);">
+                        ₹{{ o['quantity'] * (o['price'] if o['price'] else 0) }}
+                    </td>
+                    <td style="padding:12px; font-size:13px;">
+                        <span class="status-badge processing" style="font-size:11px;">{{ o['payment_method'] }}</span>
+                    </td>
+                    <td style="padding:12px; font-size:12px; color:var(--subtext-color); max-width:180px;">
+                        {{ o['delivery_address'] }}
+                        {% if o['contact_phone'] %}
+                        <br><span style="font-size:11px; color:#555;">📞 {{ o['contact_phone'] }}</span>
+                        {% endif %}
+                    </td>
+                    <td style="padding:12px;">
+                        <span class="status-badge {% if o['status'] == 'Delivered' %}delivered{% elif o['status'] == 'Processing' %}processing{% elif o['status'] == 'Cancelled' %}cancelled{% else %}pending{% endif %}">
+                            {{ o['status'] }}
+                        </span>
+                    </td>
+                    <td style="padding:12px; font-size:12.5px; color:var(--subtext-color);">{{ o['ordered_on'] }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="chart-card" style="text-align:center; padding:45px 20px; margin-top:25px;">
+        <div style="font-size:48px; margin-bottom:12px;">📦</div>
+        <h3>No orders placed yet</h3>
+        <p style="color:var(--subtext-color); margin-bottom:18px;">Order certified seeds, saplings, or fungicides recommended for your crop diseases.</p>
+        <a href="/shop" class="btn">Browse Shop & Marketplace</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const cart = getCart();
+    const count = cart.reduce((sum, i) => sum + i.quantity, 0);
+    const countEl = document.getElementById('ordersPageCartCount');
+    if (countEl) countEl.innerText = count;
+});
+</script>
+{% endblock %}

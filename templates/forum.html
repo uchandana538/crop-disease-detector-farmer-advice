@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}LeafDoc — Farmer Community Forum{% endblock %}
+
+{% block content %}
+<div class="dashboard-container" style="max-width:860px;">
+    <h1>💬 Farmer Advisory Community Forum</h1>
+    <p class="subtitle">Exchange real-world crop management tips, discuss fungal outbreaks, and get peer advice.</p>
+
+    <!-- Post Creation Box -->
+    <div class="chart-card" style="margin-top:20px;">
+        <h3 style="margin-bottom:14px;">✍️ Post a Tip or Question</h3>
+        <form method="POST" action="/forum">
+            <div style="display:flex; gap:12px; margin-bottom:12px; flex-wrap:wrap;">
+                <div style="flex:1; min-width:200px;">
+                    <label style="font-size:13px;">Topic Category</label>
+                    <select name="tag" style="padding:9px 12px; font-size:13.5px;">
+                        <option value="Disease Help">🍂 Disease Help & Diagnosis</option>
+                        <option value="Organic Farming">🌱 Organic & Natural Sprays</option>
+                        <option value="Crop Rotation">🌾 Crop Rotation & Soil Health</option>
+                        <option value="Watering Tips">💧 Irrigation & Moisture Management</option>
+                        <option value="General">💬 General Farming Advice</option>
+                    </select>
+                </div>
+            </div>
+            <textarea name="message" required placeholder="Share an agricultural insight, ask about symptoms, or recommend remedies..." style="min-height:90px; margin-bottom:10px;"></textarea>
+            <button type="submit" class="btn">🚀 Publish to Forum</button>
+        </form>
+    </div>
+
+    <!-- Forum Posts Feed -->
+    <div style="margin-top:25px;">
+        <h3 style="color:var(--accent-green); margin-bottom:14px; font-size:18px;">📢 Recent Community Discussions</h3>
+        {% for post in posts %}
+        <div class="chart-card" style="margin-bottom:16px; padding:18px 22px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <div style="width:34px; height:34px; border-radius:50%; background:linear-gradient(135deg, #43a047, #2e7d32); color:white; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px;">
+                        {{ post['farmer_name'][0] }}
+                    </div>
+                    <div>
+                        <strong style="color:var(--accent-green); font-size:15px;">{{ post['farmer_name'] }}</strong>
+                        {% if post['region'] %}
+                        <span style="font-size:12px; color:var(--subtext-color);">({{ post['region'] }})</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div>
+                    <span class="status-badge processing" style="font-size:11.5px;">{{ post['tag'] }}</span>
+                    <span style="color:var(--subtext-color); font-size:12px; margin-left:8px;">{{ post['posted_on'] }}</span>
+                </div>
+            </div>
+            <p style="margin-top:12px; line-height:1.55; font-size:14px;">{{ post['message'] }}</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

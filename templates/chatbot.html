@@ -1,0 +1,171 @@
+<!-- AI Chatbot Floating Trigger -->
+<button id="chatbotToggle" onclick="toggleChat()" title="Chat with AI Plant Doctor" class="no-print">🤖</button>
+
+<!-- AI Chatbot Box -->
+<div id="chatbotBox" class="no-print">
+    <div class="chat-header">
+        <span>🌿 LeafDoc AI Assistant</span>
+        <span class="close-btn" onclick="toggleChat()" title="Close chat">✖</span>
+    </div>
+
+    <div class="chat-messages" id="chatMessages">
+        <div class="chat-row bot">
+            <div class="chat-avatar bot">🤖</div>
+            <div class="chat-msg bot">
+                Namaste farmer! 🌱 I'm your LeafDoc Assistant. Ask me about crop diseases, dosage schedules, organic remedies, or how to use this app.
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Prompt Chips -->
+    <div class="chat-chips">
+        <button class="chip-btn" onclick="sendChipPrompt('Tomato Blight remedy')">🍅 Tomato Blight</button>
+        <button class="chip-btn" onclick="sendChipPrompt('Potato Late Blight spray')">🥔 Late Blight</button>
+        <button class="chip-btn" onclick="sendChipPrompt('Organic pesticide advice')">🧴 Organic Sprays</button>
+        <button class="chip-btn" onclick="sendChipPrompt('How to scan leaves')">📸 How to Scan</button>
+        <button class="chip-btn" onclick="sendChipPrompt('Watering tips to avoid fungus')">💧 Watering Tips</button>
+    </div>
+
+    <div class="chat-input-row">
+        <input type="text" id="chatInput" placeholder="Ask about crops, symptoms..." onkeypress="if(event.key==='Enter') sendChat()">
+        <button onclick="startVoiceInput()" id="micBtn" title="Voice Input" style="background:linear-gradient(135deg,#ff9800,#f57c00);">🎤</button>
+        <button onclick="sendChat()" title="Send">➤</button>
+    </div>
+</div>
+
+<script>
+function toggleChat() {
+    const box = document.getElementById('chatbotBox');
+    if (box) box.classList.toggle('open');
+}
+
+function sendChipPrompt(text) {
+    document.getElementById('chatInput').value = text;
+    sendChat();
+}
+
+function sendChat() {
+    const input = document.getElementById('chatInput');
+    const message = input.value.trim();
+    if (!message) return;
+
+    const chatBox = document.getElementById('chatMessages');
+
+    const userRow = document.createElement('div');
+    userRow.className = 'chat-row user';
+    userRow.innerHTML = `<div class="chat-avatar user">🧑</div><div class="chat-msg user">${escapeHtml(message)}</div>`;
+    chatBox.appendChild(userRow);
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+    input.value = '';
+
+    // Show typing dots
+    const typingRow = document.createElement('div');
+    typingRow.className = 'chat-row bot';
+    typingRow.id = 'typingRow';
+    typingRow.innerHTML = `<div class="chat-avatar bot">🤖</div><div class="chat-msg bot"><span style="opacity:0.6;">Consulting pathology knowledge base...</span></div>`;
+    chatBox.appendChild(typingRow);
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+    setTimeout(() => {
+        const tr = document.getElementById('typingRow');
+        if (tr) tr.remove();
+
+        const reply = getBotReply(message.toLowerCase());
+        const botRow = document.createElement('div');
+        botRow.className = 'chat-row bot';
+        botRow.innerHTML = `<div class="chat-avatar bot">🤖</div><div class="chat-msg bot">${reply}</div>`;
+        chatBox.appendChild(botRow);
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }, 550);
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function getBotReply(msg) {
+    if (msg.match(/\b(hello|hi|hey|namaste|good morning|good evening)\b/)) {
+        return "Hello farmer! 🌾 How can I assist you with your crops today? Tap one of the quick chips or ask any plant health question.";
+    }
+    if (msg.includes('thank')) {
+        return "You're very welcome! Wishing you a bountiful and healthy harvest! 🌾✨";
+    }
+    if (msg.match(/\b(bye|goodbye|see you)\b/)) {
+        return "Goodbye! Come back anytime your crops need a checkup. 🌿";
+    }
+    if (msg.includes('upload') || msg.includes('scan') || msg.includes('how to use') || msg.includes('how does')) {
+        return "To scan a plant: Go to <strong>Home</strong>, select your crop (e.g. Tomato, Rice), upload a clear photo of the leaf, and click <strong>Detect Disease</strong>. You'll get an immediate diagnosis with dosage prescriptions!";
+    }
+    if (msg.includes('prescription') || msg.includes('print') || msg.includes('download')) {
+        return "After detecting a leaf disease on the results page, click <strong>🖨️ Print Prescription</strong> to download or print an official doctor-style agricultural treatment plan with dosage.";
+    }
+    if (msg.includes('blight')) {
+        return "🍂 <strong>Leaf Blight:</strong> Fungal pathogen causing dark necrotic lesions. Treatment: Spray Copper Fungicide (Blitox 50) @ 2.5g/L or Mancozeb 75 WP. Avoid overhead watering and remove dead foliage.";
+    }
+    if (msg.includes('rust')) {
+        return "🟠 <strong>Rust:</strong> Yellow-orange pustules on leaf undersides. Treatment: Propiconazole 25 EC (1ml/L) or Sulfur fungicide. Destroy volunteer weeds and increase row spacing.";
+    }
+    if (msg.includes('mildew')) {
+        return "⚪ <strong>Powdery Mildew:</strong> White talcum-like fungal coating. Treatment: Spray Potassium Bicarbonate (2.5g/L) or Wettable Sulfur. Ensure good sunlight penetration.";
+    }
+    if (msg.includes('bacterial') || msg.includes('spot')) {
+        return "🔴 <strong>Bacterial Leaf Spot:</strong> Angular, water-soaked dark spots. Treatment: Copper Hydroxide (Kocide @ 2g/L) + Streptocycline. Avoid working in fields when foliage is wet.";
+    }
+    if (msg.includes('tomato')) {
+        return "🍅 <strong>Tomato Advisory:</strong> Watch for Early/Late Blight and Yellow Leaf Curl. Spray 10000 PPM Neem Oil (1.5ml/L) to control whiteflies and prune lower leaves for ventilation.";
+    }
+    if (msg.includes('potato')) {
+        return "🥔 <strong>Potato Advisory:</strong> Late Blight develops rapidly during cool, moist weather. Apply Mancozeb (2.5g/L) preventively and ensure proper ridge earthing-up.";
+    }
+    if (msg.includes('rice') || msg.includes('paddy')) {
+        return "🌾 <strong>Rice Advisory:</strong> Rice Blast shows diamond lesions. Apply Tricyclazole (0.6g/L) and avoid excessive urea nitrogen application.";
+    }
+    if (msg.includes('chili') || msg.includes('pepper')) {
+        return "🌶️ <strong>Chili Advisory:</strong> Anthracnose causes sunken spots. Spray Azoxystrobin (1ml/L) and mulch beds to stop soil splash.";
+    }
+    if (msg.includes('organic') || msg.includes('neem') || msg.includes('natural')) {
+        return "🌱 <strong>Organic Options:</strong> Cold-pressed Neem Bio-Pesticide (1500 PPM @ 3ml/L), fermented buttermilk spray for mildew, and vermicompost tea to strengthen natural plant immunity.";
+    }
+    if (msg.includes('water') || msg.includes('irrigation')) {
+        return "💧 <strong>Irrigation Rule:</strong> Always irrigate at the soil base using drip or furrow early in the morning. Wetting leaves invites fungal spores to germinate!";
+    }
+    if (msg.includes('shop') || msg.includes('buy') || msg.includes('order')) {
+        return "🛒 You can order certified seeds, saplings, neem bio-pesticides, and copper fungicides directly from our <strong>Agro Shop</strong> with Cash on Delivery or UPI!";
+    }
+    return "I'm always learning! 🌱 For specific advice, ask about a crop (Tomato, Rice, Potato), a disease (Blight, Rust, Mildew), or organic remedies!";
+}
+
+function startVoiceInput() {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+        alert('Voice input is not supported in this browser. Please try Chrome or Edge!');
+        return;
+    }
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.interimResults = false;
+
+    const micBtn = document.getElementById('micBtn');
+    micBtn.innerText = '🔴';
+
+    recognition.start();
+
+    recognition.onresult = function(event) {
+        const transcript = event.results[0][0].transcript;
+        document.getElementById('chatInput').value = transcript;
+        micBtn.innerText = '🎤';
+        sendChat();
+    };
+
+    recognition.onerror = function() {
+        micBtn.innerText = '🎤';
+    };
+
+    recognition.onend = function() {
+        micBtn.innerText = '🎤';
+    };
+}
+</script>
